@@ -38,11 +38,11 @@ def run_training(init, train_data, valid_data, train_step, error, accuracy, inpu
             total_time = time.time() - start_time
             
             f = open("log.txt",'ab')
-            f.write('\nEpoch {0:02d} ({5:.2f}s): err(train)={1:.2f} acc(train)={2:.2f} err(valid)={3:.2f} acc(valid)={4:.2f}'.format(epoch + 1, running_error, running_accuracy, valid_error, valid_accuracy, total_time))
+            f.write('\nEpoch {0:02d} ({5:.2f}s): err(train)={1:.2f} acc(train)={2:.4f} err(valid)={3:.2f} acc(valid)={4:.4f}'.format(epoch + 1, running_error, running_accuracy, valid_error, valid_accuracy, total_time))
             f.close()
 
             if (epoch+1)%1 == 0:
-                print('Epoch {0:02d} ({5:.2f}s): err(train)={1:.2f} acc(train)={2:.2f} err(valid)={3:.2f} acc(valid)={4:.2f}'.format(epoch + 1, running_error, running_accuracy, valid_error, valid_accuracy, total_time))
+                print('Epoch {0:02d} ({5:.2f}s): err(train)={1:.2f} acc(train)={2:.4f} err(valid)={3:.2f} acc(valid)={4:.4f}'.format(epoch + 1, running_error, running_accuracy, valid_error, valid_accuracy, total_time))
     return err_train, acc_train, err_valid, acc_valid
 
 def run_training_with_bn(init, train_data, valid_data, train_step, error, accuracy, inputs, targets, num_epoch=10):
