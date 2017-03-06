@@ -3,11 +3,11 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-def run_training(init, train_data, valid_data, train_step, error, accuracy, inputs, targets, num_epoch=10):
+def run_training(init, train_data, valid_data, train_step, error, accuracy, inputs, targets, num_epoch=10, run_info="None"):
     '''Run training'''
     err_train, acc_train, err_valid, acc_valid = {}, {}, {}, {}
     f = open("log.txt",'ab')
-    f.write("\n\n=== RUN ON "+str(datetime.now())+" ===")
+    f.write("\n\n=== RUN ON "+str(datetime.now())+" ===\nRUN INFO: "+run_info)
     f.close()
     with tf.Session() as sess:
         sess.run(init)
