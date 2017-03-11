@@ -2,3 +2,4 @@ cifar/cifar10/
 cifar/cifar100/
 cifar/cifar*/
 notebooks/alexnet/cifar10_alexnet_model/
+notebooks/alexnet/cifar100_alexnet_model/
