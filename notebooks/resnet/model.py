@@ -2,63 +2,25 @@ import tensorflow as tf
 import numpy as np
 import six
 
-# TODO(xpan): Consider batch_norm in contrib/layers/python/layers/layers.py
-def _batch_norm(name, x, training=True):
-  """Batch normalization."""
-  with tf.variable_scope(name):
-    params_shape = [x.get_shape()[-1]]
-
-    beta = tf.get_variable(
-        'beta', params_shape, tf.float32,
-        initializer=tf.constant_initializer(0.0, tf.float32))
-    gamma = tf.get_variable(
-        'gamma', params_shape, tf.float32,
-        initializer=tf.constant_initializer(1.0, tf.float32))
-
-    if training==True:
-      mean, variance = tf.nn.moments(x, [0, 1, 2], name='moments')
-
-      moving_mean = tf.get_variable(
-          'moving_mean', params_shape, tf.float32,
-          initializer=tf.constant_initializer(0.0, tf.float32),
-          trainable=False)
-      moving_variance = tf.get_variable(
-          'moving_variance', params_shape, tf.float32,
-          initializer=tf.constant_initializer(1.0, tf.float32),
-          trainable=False)
-
-      '''_extra_train_ops.append(moving_averages.assign_moving_average(
-                            moving_mean, mean, 0.9))
-                        _extra_train_ops.append(moving_averages.assign_moving_average(
-                            moving_variance, variance, 0.9))'''
-    else:
-      mean = tf.get_variable(
-          'moving_mean', params_shape, tf.float32,
-          initializer=tf.constant_initializer(0.0, tf.float32),
-          trainable=False)
-      variance = tf.get_variable(
-          'moving_variance', params_shape, tf.float32,
-          initializer=tf.constant_initializer(1.0, tf.float32),
-          trainable=False)
-    # elipson used to be 1e-5. Maybe 0.001 solves NaN problem in deeper net.
-    y = tf.nn.batch_normalization(
-        x, mean, variance, beta, gamma, 0.001)
-    y.set_shape(x.get_shape())
-    return y
-
 def _residual(x, in_filter, out_filter, stride,
               activate_before_residual, training):
   """Residual unit with 2 sub layers."""
   with tf.variable_scope('residual_only_activation'):
     orig_x = x
-    x = _batch_norm('init_bn', x, training)
+    if training==True:
+      x = tf.contrib.layers.batch_norm(x, center=False, updates_collections=None, is_training=True, scope='init_bn')
+    else:
+      x = tf.contrib.layers.batch_norm(x, center=False, updates_collections=None, is_training=False, scope='init_bn')
     x = _relu(x, 0.1)
 
   with tf.variable_scope('sub1'):
     x = _conv('conv1', x, 3, in_filter, out_filter, stride)
 
   with tf.variable_scope('sub2'):
-    x = _batch_norm('bn2', x, training)
+    if training==True:
+      x = tf.contrib.layers.batch_norm(x, center=False, updates_collections=None, is_training=True, scope='bn2')
+    else:
+      x = tf.contrib.layers.batch_norm(x, center=False, updates_collections=None, is_training=False, scope='bn2')
     x = _relu(x, 0.1)
     x = _conv('conv2', x, 3, out_filter, out_filter, [1, 1, 1, 1])
 
@@ -167,7 +129,10 @@ def inference(images, NUM_CLASSES, training=True):
       x = _residual(x, filters[3], filters[3], _stride_arr(1), False, training)
 
   with tf.variable_scope('unit_last'):
-    x = _batch_norm('final_bn', x, training)
+    if training==True:
+      x = tf.contrib.layers.batch_norm(x, center=False, updates_collections=None, is_training=True, scope='final_bn')
+    else:
+      x = tf.contrib.layers.batch_norm(x, center=False, updates_collections=None, is_training=False, scope='final_bn')
     x = _relu(x, 0.1)
     x = _global_avg_pool(x)
 
