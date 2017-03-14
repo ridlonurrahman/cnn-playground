@@ -86,9 +86,9 @@ def inference(images, NUM_CLASSES, training=True):
                            padding='SAME', name='pool1')
 
     if training==True:
-      dropout_1 = tf.nn.dropout(pool1, 0.75)
+        dropout_1 = tf.nn.dropout(pool1, 0.75)
     else:
-      dropout_1 = tf.nn.dropout(pool1, 1)
+        dropout_1 = tf.nn.dropout(pool1, 1)
 
     # CONV 2
     with tf.variable_scope('conv2_1') as scope:
@@ -115,9 +115,9 @@ def inference(images, NUM_CLASSES, training=True):
                            padding='SAME', name='pool2')
 
     if training==True:
-      dropout_2 = tf.nn.dropout(pool2, 0.75)
+        dropout_2 = tf.nn.dropout(pool2, 0.75)
     else:
-      dropout_2 = tf.nn.dropout(pool2, 1)
+        dropout_2 = tf.nn.dropout(pool2, 1)
 
     # CONV 3
     with tf.variable_scope('conv3_1') as scope:
@@ -140,44 +140,54 @@ def inference(images, NUM_CLASSES, training=True):
         pre_activation = tf.nn.bias_add(conv, biases)
         conv3_2 = tf.nn.relu(pre_activation, name=scope.name)
 
-    pool3 = tf.nn.max_pool(conv3_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
+    with tf.variable_scope('conv3_3') as scope:
+        kernel = _variable_with_weight_decay('weights',
+                                             shape=[3, 3, 256, 256],
+                                             stddev=5e-2,
+                                             wd=0.0)
+        conv = tf.nn.conv2d(conv3_2, kernel, [1, 1, 1, 1], padding='SAME')
+        biases = _variable_on_cpu('biases', [256], tf.constant_initializer(0.1))
+        pre_activation = tf.nn.bias_add(conv, biases)
+        conv3_3 = tf.nn.relu(pre_activation, name=scope.name)
+
+    pool3 = tf.nn.max_pool(conv3_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                            padding='SAME', name='pool3')
 
     if training==True:
-      dropout_3 = tf.nn.dropout(pool3, 0.75)
+        dropout_3 = tf.nn.dropout(pool3, 0.75)
     else:
-      dropout_3 = tf.nn.dropout(pool3, 1)
+        dropout_3 = tf.nn.dropout(pool3, 1)
 
     # local3
     with tf.variable_scope('local3') as scope:
         # Move everything into depth so we can perform a single matrix multiply.
         reshape = tf.reshape(dropout_3, [128, -1])
         dim = reshape.get_shape()[1].value
-        weights = _variable_with_weight_decay('weights', shape=[dim, 512],
+        weights = _variable_with_weight_decay('weights', shape=[dim, 1024],
                                               stddev=0.04, wd=0.004)
-        biases = _variable_on_cpu('biases', [512], tf.constant_initializer(0.1))
+        biases = _variable_on_cpu('biases', [1024], tf.constant_initializer(0.1))
         local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)
 
     if training==True:
-      dropout_4 = tf.nn.dropout(local3, 0.5)
+        dropout_4 = tf.nn.dropout(local3, 0.5)
     else:
-      dropout_4 = tf.nn.dropout(local3, 1)
+        dropout_4 = tf.nn.dropout(local3, 1)
 
     # local4
     with tf.variable_scope('local4') as scope:
-        weights = _variable_with_weight_decay('weights', shape=[512, 512],
+        weights = _variable_with_weight_decay('weights', shape=[1024, 1024],
                                               stddev=0.04, wd=0.004)
-        biases = _variable_on_cpu('biases', [512], tf.constant_initializer(0.1))
+        biases = _variable_on_cpu('biases', [1024], tf.constant_initializer(0.1))
         local4 = tf.nn.relu(tf.matmul(dropout_4, weights) + biases, name=scope.name)
 
     if training==True:
-      dropout_5 = tf.nn.dropout(local4, 0.5)
+        dropout_5 = tf.nn.dropout(local4, 0.5)
     else:
-      dropout_5 = tf.nn.dropout(local4, 1)
+        dropout_5 = tf.nn.dropout(local4, 1)
 
     with tf.variable_scope('softmax_linear') as scope:
-        weights = _variable_with_weight_decay('weights', [512, NUM_CLASSES],
-                                              stddev=1/512.0, wd=0.0)
+        weights = _variable_with_weight_decay('weights', [1024, NUM_CLASSES],
+                                              stddev=1/1024.0, wd=0.0)
         biases = _variable_on_cpu('biases', [NUM_CLASSES],
                                   tf.constant_initializer(0.0))
         softmax_linear = tf.add(tf.matmul(dropout_5, weights), biases, name=scope.name)
