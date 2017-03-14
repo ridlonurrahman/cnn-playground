@@ -5,7 +5,7 @@ notebooks/alexnet/cifar10_alexnet_model/
 notebooks/alexnet/cifar100_alexnet_model/
 notebooks/vgg/cifar10_vgg_model/
 notebooks/vgg/cifar100_vgg_model/
-notebooks/vgg_deeper/cifar10_vgg_model/
+notebooks/vgg_deeper/cifar10_vgg_model/model*
 notebooks/vgg_allconvnet/cifar10_vgg_model/
 notebooks/vgg_dropout/cifar10_vgg_model/
 notebooks/vgg_dropout_bn/cifar10_vgg_model/
