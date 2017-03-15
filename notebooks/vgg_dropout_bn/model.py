@@ -44,7 +44,46 @@ def _variable_with_weight_decay(name, shape, stddev, wd):
         tf.add_to_collection('losses', weight_decay)
     return var
 
-keep_prob = tf.placeholder(tf.float32, name='keep_prob')
+def batch_norm(x, n_out, phase_train):
+    """
+    Batch normalization on convolutional maps.
+    Ref.: http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
+    Args:
+        x:           Tensor, 4D BHWD input maps
+        n_out:       integer, depth of input maps
+        phase_train: boolean tf.Varialbe, true indicates training phase
+        scope:       string, variable scope
+    Return:
+        normed:      batch-normalized maps
+    """
+    with tf.variable_scope('bn'):
+        if n_out == 1:
+            gamma = tf.Variable(tf.ones([x.get_shape()[-1]]))
+            beta = tf.Variable(tf.zeros([x.get_shape()[-1]]))
+            batch_mean, batch_var = tf.nn.moments(x,[0], name='moments')
+        else:
+            beta = tf.Variable(tf.constant(0.0, shape=[n_out]),
+                                         name='beta', trainable=True)
+            gamma = tf.Variable(tf.constant(1.0, shape=[n_out]),
+                                          name='gamma', trainable=True)
+            batch_mean, batch_var = tf.nn.moments(x, [0,1,2], name='moments')
+        ema = tf.train.ExponentialMovingAverage(decay=0.5)
+
+        def mean_var_with_update():
+            ema_apply_op = ema.apply([batch_mean, batch_var])
+            with tf.control_dependencies([ema_apply_op]):
+                return tf.identity(batch_mean), tf.identity(batch_var)
+
+        if phase_train==True:
+            mean, var = mean_var_with_update()
+        else:
+            mean = batch_mean
+            var = batch_var
+        '''mean, var = tf.cond(phase_train,
+                                                    mean_var_with_update,
+                                                    lambda: (ema.average(batch_mean), ema.average(batch_var)))'''
+        normed = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-3)
+    return normed
 
 def inference(images, NUM_CLASSES, training=True):
     """Build the CIFAR-10 model.
@@ -70,8 +109,8 @@ def inference(images, NUM_CLASSES, training=True):
         conv = tf.nn.conv2d(images, kernel, [1, 1, 1, 1], padding='SAME')
         biases = _variable_on_cpu('biases', [64], tf.constant_initializer(0.0))
         pre_activation = tf.nn.bias_add(conv, biases)
-        #bn1_1 = tf.contrib.layers.batch_norm(pre_activation, center=True, scale=True, is_training=training)
-        conv1_1 = tf.nn.relu(pre_activation, name=scope.name)
+        bn1_1 = batch_norm(pre_activation, 64, training)
+        conv1_1 = tf.nn.relu(bn1_1, name=scope.name)
 
     with tf.variable_scope('conv1_2') as scope:
         kernel = _variable_with_weight_decay('weights',
@@ -81,8 +120,8 @@ def inference(images, NUM_CLASSES, training=True):
         conv = tf.nn.conv2d(conv1_1, kernel, [1, 1, 1, 1], padding='SAME')
         biases = _variable_on_cpu('biases', [64], tf.constant_initializer(0.1))
         pre_activation = tf.nn.bias_add(conv, biases)
-        #bn1_2 = tf.contrib.layers.batch_norm(pre_activation, center=True, scale=True, is_training=training)
-        conv1_2 = tf.nn.relu(pre_activation, name=scope.name)
+        bn1_2 = batch_norm(pre_activation, 64, training)
+        conv1_2 = tf.nn.relu(bn1_2, name=scope.name)
 
     pool1 = tf.nn.max_pool(conv1_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                            padding='SAME', name='pool1')
@@ -101,8 +140,8 @@ def inference(images, NUM_CLASSES, training=True):
         conv = tf.nn.conv2d(dropout_1, kernel, [1, 1, 1, 1], padding='SAME')
         biases = _variable_on_cpu('biases', [128], tf.constant_initializer(0.0))
         pre_activation = tf.nn.bias_add(conv, biases)
-        #bn2_1 = tf.contrib.layers.batch_norm(pre_activation, center=True, scale=True, is_training=training)
-        conv2_1 = tf.nn.relu(pre_activation, name=scope.name)
+        bn2_1 = batch_norm(pre_activation, 128, training)
+        conv2_1 = tf.nn.relu(bn2_1, name=scope.name)
 
     with tf.variable_scope('conv2_2') as scope:
         kernel = _variable_with_weight_decay('weights',
@@ -112,8 +151,8 @@ def inference(images, NUM_CLASSES, training=True):
         conv = tf.nn.conv2d(conv2_1, kernel, [1, 1, 1, 1], padding='SAME')
         biases = _variable_on_cpu('biases', [128], tf.constant_initializer(0.1))
         pre_activation = tf.nn.bias_add(conv, biases)
-        #bn2_2 = tf.contrib.layers.batch_norm(pre_activation, center=True, scale=True, is_training=training)
-        conv2_2 = tf.nn.relu(pre_activation, name=scope.name)
+        bn2_2 = batch_norm(pre_activation, 128, training)
+        conv2_2 = tf.nn.relu(bn2_2, name=scope.name)
 
     pool2 = tf.nn.max_pool(conv2_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                            padding='SAME', name='pool2')
@@ -132,8 +171,8 @@ def inference(images, NUM_CLASSES, training=True):
         conv = tf.nn.conv2d(dropout_2, kernel, [1, 1, 1, 1], padding='SAME')
         biases = _variable_on_cpu('biases', [256], tf.constant_initializer(0.0))
         pre_activation = tf.nn.bias_add(conv, biases)
-        #bn3_1 = tf.contrib.layers.batch_norm(pre_activation, center=True, scale=True, is_training=training)
-        conv3_1 = tf.nn.relu(pre_activation, name=scope.name)
+        bn3_1 = batch_norm(pre_activation, 256, training)
+        conv3_1 = tf.nn.relu(bn3_1, name=scope.name)
 
     with tf.variable_scope('conv3_2') as scope:
         kernel = _variable_with_weight_decay('weights',
@@ -143,10 +182,22 @@ def inference(images, NUM_CLASSES, training=True):
         conv = tf.nn.conv2d(conv3_1, kernel, [1, 1, 1, 1], padding='SAME')
         biases = _variable_on_cpu('biases', [256], tf.constant_initializer(0.1))
         pre_activation = tf.nn.bias_add(conv, biases)
-        #bn3_2 = tf.contrib.layers.batch_norm(pre_activation, center=True, scale=True, is_training=training)
-        conv3_2 = tf.nn.relu(pre_activation, name=scope.name)
+        bn3_2 = batch_norm(pre_activation, 256, training)
+        conv3_2 = tf.nn.relu(bn3_2, name=scope.name)
 
-    pool3 = tf.nn.max_pool(conv3_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
+    with tf.variable_scope('conv3_3') as scope:
+        kernel = _variable_with_weight_decay('weights',
+                                             shape=[3, 3, 256, 256],
+                                             stddev=5e-2,
+                                             wd=0.0)
+        conv = tf.nn.conv2d(conv3_2, kernel, [1, 1, 1, 1], padding='SAME')
+        biases = _variable_on_cpu('biases', [256], tf.constant_initializer(0.1))
+        pre_activation = tf.nn.bias_add(conv, biases)
+        bn3_3 = batch_norm(pre_activation, 256, training)
+        conv3_3 = tf.nn.relu(bn3_3, name=scope.name)
+
+
+    pool3 = tf.nn.max_pool(conv3_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
                            padding='SAME', name='pool3')
 
     if training==True:
@@ -163,10 +214,7 @@ def inference(images, NUM_CLASSES, training=True):
                                               stddev=0.04, wd=0.004)
         biases = _variable_on_cpu('biases', [512], tf.constant_initializer(0.1))
         pre_activation = tf.matmul(reshape, weights) + biases
-        if training==True:
-          bn4 = tf.contrib.layers.batch_norm(pre_activation, center=False, updates_collections=None, is_training=True)
-        else:
-          bn4 = tf.contrib.layers.batch_norm(pre_activation, center=False, updates_collections=None, is_training=False)
+        bn4 = batch_norm(pre_activation, 1, training)
         local3 = tf.nn.relu(bn4, name=scope.name)
 
     if training==True:
@@ -180,10 +228,7 @@ def inference(images, NUM_CLASSES, training=True):
                                               stddev=0.04, wd=0.004)
         biases = _variable_on_cpu('biases', [512], tf.constant_initializer(0.1))
         pre_activation = tf.matmul(dropout_4, weights) + biases
-        if training==True:
-          bn5 = tf.contrib.layers.batch_norm(pre_activation, center=False, updates_collections=None, is_training=True)
-        else:
-          bn5 = tf.contrib.layers.batch_norm(pre_activation, center=False, updates_collections=None, is_training=False)
+        bn5 = batch_norm(pre_activation, 1, training)
         local4 = tf.nn.relu(bn5, name=scope.name)
 
     if training==True:
