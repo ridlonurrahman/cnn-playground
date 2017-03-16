@@ -1,3 +1,5 @@
+# Tensorflow Training function in AlexNet example
+
 import tensorflow as tf
 
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
@@ -9,7 +11,7 @@ INITIAL_LEARNING_RATE = 0.15
 
 
 def train(total_loss, global_step, batch_size):
-    """Train the model.
+    """Train function
     Args:
       total_loss: Total loss from loss().
       global_step: Integer Variable counting the number of training steps
@@ -30,11 +32,11 @@ def train(total_loss, global_step, batch_size):
                                     staircase=True)
 
     # Generate moving averages of all losses and associated summaries.
-    loss_averages_op = _add_loss_summaries(total_loss)
+    loss_averages_op = add_loss_summaries(total_loss)
 
     # Compute gradients.
     with tf.control_dependencies([loss_averages_op]):
-        opt = tf.train.MomentumOptimizer(lr, 0.9)
+        opt = tf.train.GradientDescentOptimizer(lr)
         grads = opt.compute_gradients(total_loss)
 
     # Apply gradients.
@@ -50,8 +52,8 @@ def train(total_loss, global_step, batch_size):
 
     return train_op
 
-def _add_loss_summaries(total_loss):
-    """Add summaries for losses in the model.
+def add_loss_summaries(total_loss):
+    """Add summaries.
     Args:
       total_loss: Total loss from loss().
     Returns:

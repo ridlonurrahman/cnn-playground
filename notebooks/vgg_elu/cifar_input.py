@@ -1,3 +1,6 @@
+''' The cifar_input module used instead of mlp.data_provider
+'''
+
 # Copyright 2016 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +16,6 @@
 # limitations under the License.
 # ==============================================================================
 
-"""CIFAR dataset input module.
-"""
 
 import tensorflow as tf
 
@@ -32,6 +33,7 @@ def build_input(dataset, data_path, batch_size, mode):
     Raises:
       ValueError: when the specified dataset is not supported.
     """
+
     image_size = 32
     if dataset == 'cifar10':
         label_bytes = 1
@@ -50,17 +52,14 @@ def build_input(dataset, data_path, batch_size, mode):
 
     data_files = tf.gfile.Glob(data_path)
     file_queue = tf.train.string_input_producer(data_files, shuffle=True)
-    # Read examples from files in the filename queue.
     reader = tf.FixedLengthRecordReader(record_bytes=record_bytes)
     _, value = reader.read(file_queue)
 
     # Convert these examples to dense labels and processed images.
     record = tf.reshape(tf.decode_raw(value, tf.uint8), [record_bytes])
     label = tf.cast(tf.slice(record, [label_offset], [label_bytes]), tf.int32)
-    # Convert from string to [depth * height * width] to [depth, height, width].
     depth_major = tf.reshape(tf.slice(record, [label_bytes], [image_bytes]),
                              [depth, image_size, image_size])
-    # Convert from [depth, height, width] to [height, width, depth].
     image = tf.cast(tf.transpose(depth_major, [1, 2, 0]), tf.float32)
 
     if mode == 'train':
@@ -68,10 +67,12 @@ def build_input(dataset, data_path, batch_size, mode):
             image, image_size, image_size)
         image = tf.random_crop(image, [image_size, image_size, 3])
         image = tf.image.random_flip_left_right(image)
-        # Brightness/saturation/constrast provides small gains .2%~.5% on cifar.
+
+        # We turn this off when training. Only prepocessing using per_image_standarization
         image = tf.image.random_brightness(image, max_delta=63. / 255.)
         image = tf.image.random_saturation(image, lower=0.5, upper=1.5)
         image = tf.image.random_contrast(image, lower=0.2, upper=1.8)
+        
         image = tf.image.per_image_standardization(image)
 
         example_queue = tf.RandomShuffleQueue(
@@ -91,6 +92,8 @@ def build_input(dataset, data_path, batch_size, mode):
             shapes=[[image_size, image_size, depth], [1]])
         num_threads = 1
 
+    
+    # QueueRunner
     example_enqueue_op = example_queue.enqueue([image, label])
     tf.train.add_queue_runner(tf.train.queue_runner.QueueRunner(
         example_queue, [example_enqueue_op] * num_threads))
@@ -110,6 +113,4 @@ def build_input(dataset, data_path, batch_size, mode):
     assert labels.get_shape()[0] == batch_size
     assert labels.get_shape()[1] == num_classes
 
-    # Display the training images in the visualizer.
-    tf.summary.image('images', images)
     return images, labels

@@ -12,6 +12,8 @@ notebooks/vgg_dropout_bn/cifar10_vgg_model/model*
 notebooks/vgg_dropout_bn/cifar100_vgg_model/model*
 notebooks/vgg_elu/cifar10_vgg_model/model*
 notebooks/vgg_elu/cifar100_vgg_model/model*
+notebooks/vgg_elu/cifar10_vgg_model2/model*
+notebooks/vgg_elu/cifar100_vgg_model2/model*
 notebooks/alexnet_deeper/cifar10_vgg_model/model*
 notebooks/resnet/cifar10_resnet_model/model*
 
