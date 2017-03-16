@@ -3,9 +3,9 @@ import tensorflow as tf
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
 NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 10000
 MOVING_AVERAGE_DECAY = 0.9999 
-NUM_EPOCHS_PER_DECAY = 30.0
+NUM_EPOCHS_PER_DECAY = 25.0
 LEARNING_RATE_DECAY_FACTOR = 0.5
-INITIAL_LEARNING_RATE = 0.1
+INITIAL_LEARNING_RATE = 0.15
 
 
 def train(total_loss, global_step, batch_size):
@@ -34,7 +34,7 @@ def train(total_loss, global_step, batch_size):
 
     # Compute gradients.
     with tf.control_dependencies([loss_averages_op]):
-        opt = tf.train.GradientDescentOptimizer(lr)
+        opt = tf.train.MomentumOptimizer(lr, 0.9)
         grads = opt.compute_gradients(total_loss)
 
     # Apply gradients.
