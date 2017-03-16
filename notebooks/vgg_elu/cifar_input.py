@@ -65,7 +65,7 @@ def build_input(dataset, data_path, batch_size, mode):
 
     if mode == 'train':
         image = tf.image.resize_image_with_crop_or_pad(
-            image, image_size+4, image_size+4)
+            image, image_size, image_size)
         image = tf.random_crop(image, [image_size, image_size, 3])
         image = tf.image.random_flip_left_right(image)
         # Brightness/saturation/constrast provides small gains .2%~.5% on cifar.
