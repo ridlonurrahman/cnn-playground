@@ -13,8 +13,8 @@ import time
 import numpy as np
 import tensorflow as tf
 
-max_steps = 20000
-train_dir = 'cifar100_alexnet_model/'
+max_steps = 20000 # 312 Step per epoch
+train_dir = 'cifar10_alexnet_model/'
 batch_size = 128
 log_device_placement = False
 
@@ -23,10 +23,10 @@ with tf.Graph().as_default():
     
     # Generating images and its labels
     # build_inputs('cifar10/cifar100', cifar dataset dir, batch size, mode)
-    images, labels = cifar_input.build_input('cifar100', '../../cifar/cifar100/train.bin', batch_size, 'train')
+    images, labels = cifar_input.build_input('cifar10', '../../cifar/cifar100/train.bin', batch_size, 'train')
     
     # Creating graph. NUM_CLASESS=10 (CIFAR-10) or NUM_CLASESS=100 (CIFAR-100)
-    logits = inference(images, NUM_CLASSES=100)
+    logits = inference(images, NUM_CLASSES=10)
     
     # Loss/Error and Accuracy
     losses = loss(logits, labels)
