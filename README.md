@@ -1,17 +1,17 @@
 # CNN-PLAYGROUND
 
-This github is initially intended for Final Coursework of [Machine Learning Practical](http://www.inf.ed.ac.uk/teaching/courses/mlp/) (MLP) 2016-2017. I used an architecture similar to VGGNet16 for classifying CIFAR-10/100 dataset. I also compared AlexNet Accuracy with VGGNet16.
+This github is initially intended for Final Coursework of [Machine Learning Practical](http://www.inf.ed.ac.uk/teaching/courses/mlp/) (MLP) 2016-2017. We used an architecture similar to VGGNet16 for classifying CIFAR-10/100 dataset. We also compared AlexNet Accuracy with VGGNet16.
 
 ## Experimental Setup
 
-I used TensorFlow 1.0 GPU version running on Amazon EC2 p2.xlarge instance(four vCPUs Intel Xeon E5-2686, 61 GB of RAM, and one Nvidia Tesla k80 with 12GB of VRAM.)
+Weused TensorFlow 1.0 GPU version running on Amazon EC2 p2.xlarge instance(four vCPUs Intel Xeon E5-2686, 61 GB of RAM, and one Nvidia Tesla k80 with 12GB of VRAM.)
 
 ## Building The Network
 
-[AlexNet](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks) and [VGGNet]https://arxiv.org/pdf/1409.1556.pdf were designed originally for ImageNet dataset with 224x224 images size as its input. So, I did some adjustment to make them work with CIFAR dataset. Therefore, the architectures used here are not entirely similar to their paper.
+[AlexNet](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks) and [VGGNet](https://arxiv.org/pdf/1409.1556.pdf) were designed originally for ImageNet dataset with 224x224 images size as its input. So, We did some adjustment to make them work with CIFAR dataset. Therefore, the architectures used here are not entirely similar to their paper.
 
 ### AlexNet
-we cannot use the 11x11 convolutional filter because of small 32x32 images input. We use a 5x5 convolutional filter with stride 1. Also, we use the very similar max pooling with 3x3 filter size and stride 2 and followed by local response normalisation. We only utilize two convolutional layers because after the second max pooling, the spatial size is already small enough. Then, it is connected by two fully connected layers with 256 hidden units.
+we cannot use the 11x11 convolutional filter because of small 32x32 images input. We use a 5x5 convolutional filter with stride 1 and the very similar max pooling with 3x3 filter size and stride 2 and followed by local response normalisation. We only utilize two convolutional layers because after the second max pooling, the spatial size is already small enough. Then, it is connected by two fully connected layers with 256 hidden units.
 
 ### VGGNet
 We also cannot use the exactly same as VGG16 design because after the third or fourth max pooling, the spatial size of our dataset is already small. It is useless to subsample the spatial size that cannot be subsampled again. In addition, also decrease the number of neurons in the fully connected layers to 1024 hidden units per layer. For the complete architecture please refers to report.pdf
@@ -21,10 +21,10 @@ We also cannot use the exactly same as VGG16 design because after the third or f
 margin. (iii) The complexity of those architectures are high and training very deep network such as resnet takes much longer time
 
 ### Improving The Accuracy
-We tried to improve the accuracy by trying to implement [Dropout](https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf), [Batch Normalization](http://proceedings.mlr.press/v37/ioffe15.pdf), and [ELU](https://arxiv.org/abs/1511.07289). I also try an [approach](https://arxiv.org/abs/1412.6806) to replace the max-pooling layer with conventional layer that acts like pooling.
+We tried to improve the accuracy by trying to implement [Dropout](https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf), [Batch Normalization](http://proceedings.mlr.press/v37/ioffe15.pdf), and [ELU](https://arxiv.org/abs/1511.07289). We also try an [approach](https://arxiv.org/abs/1412.6806) to replace the max-pooling layer with conventional layer that acts like pooling.
 
 ## Result
-TL;DR: We achieve 90.18% on CIFAR-10 dataset.
+TL;DR: achieving 90.18% accuracy on CIFAR-10 dataset. This is quick summary from the report.
 
 We don’t expect much from our AlexNet-two-convolutional-layers performance. We try to improve the accuracy by varying the convolutional filter depth. We know that deeper convolutional filter gives a better representation from the squeezed spatial information. Yet, the performance is still significantly outperformed by VGGNet.
 
